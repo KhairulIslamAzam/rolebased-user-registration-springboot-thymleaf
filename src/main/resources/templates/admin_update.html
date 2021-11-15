@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Registration and Login App</title>
+
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous">
+
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <a class="navbar-brand" href="#">Travel Agency</a>
+        <a class="navbar-brand" href="#">Home</a>
+        <a class="navbar-brand" href="#">Profile</a>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li>Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="section">
+    <div class="container">
+        <div class="row">
+            <div class="form-group">
+                <a>>
+                    Add
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <form th:action="@{/users/update}" method="post" th:object="${userDto}" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="control-label" for="firstname"> First Name </label>
+                    <input id="firstname" class="form-control" th:field="*{firstName}"
+                           required autofocus="autofocus"/>
+                    <input type="hidden" th:field="*{id}"/>
+                </div>
+
+
+                <div class="form-group">
+                    <label class="control-label" for="lastname"> Last Name </label> <input
+                        id="lastname" class="form-control" th:field="*{lastName}"
+                        required autofocus="autofocus"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label" for="contact"> Contact </label> <input
+                        id="contact" class="form-control" th:field="*{contact}"
+                        required autofocus="autofocus"/>
+                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-3 col-form-label">Role</label>
+                                    <div class="col-sm-9">
+                                        <select type="text" th:field ="*{roleId}"class="form-control">
+                                            <option value="" >choose..</option>
+                                            <option th:each="role: ${roleDto}"
+                                                    th:value="${role.id}"
+                                                    th:text="${role.name}"></option>
+                                        </select>
+                                    </div>
+
+                                </div>
+
+<!--                <div class="form-group row">-->
+<!--                    <label class="col-4 col-form-label">Roles: </label>-->
+<!--                    <div class="col-8">-->
+<!--                        <th:block th:each="role: ${roleDto}">-->
+<!--                            <input type="checkbox" th:field="*{roles}"-->
+<!--                                   th:text="${role.name}" th:value="${role.id}" class="m-2" />-->
+<!--                        </th:block>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+                <!--                <div class="form-group row">-->
+<!--                    <label class="col-4 col-form-label">Roles: </label>-->
+<!--                    <div class="col-8">-->
+<!--                        <th:block th:each="role: ${roleDto}">-->
+<!--                            <input type="checkbox" th:field="*{roles}"-->
+<!--                                   th:text="${role.name}" th:value="${role.id}" class="m-2"/>-->
+<!--                        </th:block>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+                <div class="form-group">
+
+                    <input type="file" name="file" class="custom-file-input"
+                           id="customFile"> <label class="custom-file-label"
+                                                   for="customFile">Image</label>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-info col-2">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

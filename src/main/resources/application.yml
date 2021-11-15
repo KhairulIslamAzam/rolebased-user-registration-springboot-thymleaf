@@ -1,0 +1,26 @@
+server:
+  port: 8787
+spring:
+  security:
+    user:
+      name: azam
+      password: azam
+  jpa:
+    database: POSTGRESQL
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    platform: postgres
+    url: jdbc:postgresql://localhost:5433/login_db
+    username: postgres
+    password: 104498Azam
+    driverClassName: org.postgresql.Driver
+logging:
+  level:
+    org.springframework: WARN
+    org.springframework.security: WARN
+    org.hibernate: WARN
+    org.apache: WARN

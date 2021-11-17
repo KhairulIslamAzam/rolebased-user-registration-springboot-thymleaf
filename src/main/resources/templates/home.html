@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Registration</title>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous">
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <a class="navbar-brand" href="#">Role based User Registration & Login</a>
+        <a class="navbar-brand" href="#" >Home</a>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li sec:authorize="isAuthenticated()"><a th:href="@{/logout}">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="form-group" sec:authorize="hasAnyAuthority('ROLE_ADMIN')">
+        <a th:href="@{/users/list}">List Of Users</a>
+
+    </div>
+
+    <div class="form-group" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_MODERATE')">
+        <a th:href="@{/users/show-single-user-data}">Single User</a>
+
+    </div>
+
+    <div class="section">
+        <div class="form-group" sec:authorize="hasAnyAuthority('ROLE_USER')">
+            <p>Role not assign yet</p>
+
+        </div>
+</div>
+</div>
+</body>
+</html>

@@ -1,202 +1,158 @@
 package com.example.repository.specification;
-//
 
+import com.example.exception.FileException;
+import com.example.exception.UserNotFoundException;
 import com.example.repository.jpa.UserRegistrationRepository;
 import com.example.repository.schema.Role;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.stream.Collectors;
-
 import com.example.domain.request.RoleDto;
 import com.example.domain.request.UserDto;
 import com.example.repository.jpa.RoleRepository;
-import com.example.repository.jpa.UserRegistrationRepository;
-import com.example.repository.schema.Role;
-import com.example.repository.schema.SchemaConstant;
 import com.example.repository.schema.User;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class UserRegistrationService {
 
+    private final UserRegistrationRepository userRegistrationRepository;
+    private final RoleRepository roleRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final ModelMapper modelMapper = new ModelMapper();
 
-    @Autowired
-    private UserRegistrationRepository userRegistrationRepository;
-    @Autowired
-    private RoleRepository roleRepository;
+    public void save(UserDto userDto, MultipartFile file) {
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
-    private ModelMapper modelMapper = new ModelMapper();
 
-    public boolean save(UserDto userDto, MultipartFile file) {
+        Role role = getRole("ROLE_USER");
+        Set<Role> roles = new HashSet<>();
+        roles.add(role);
+
+
         User user = new User(userDto.getFirstName(), userDto.getLastName(), userDto.getEmail(),
-                userDto.getUserName(), userDto.getContact());
+                userDto.getUserName(),passwordEncoder.encode(userDto.getPassword()),
+                userDto.getContact(),true, roles);
 
-        List<Role> roleList = roleRepository.findAll();
-
-//        int index = 0;
-//        for (int i = 0; i < roleList.size(); i++) {
-//            if (roleList.equalsIgnoreCase("ROLE_USER")) {
-//                index = i;
-//            }
-//        }
-
-//        int index = IntStream.range(0, roleList.size())
-//                .filter(i -> roleList.get(i).getName().equals("ROLE_USER"))
-//                .findFirst().orElse(-1);
-
-
-
-        Role role = roleRepository.findByName("ROLE_USER");
-
-        user.setPassword(userDto.getPassword());
-        user.setActive(userDto.isActive());
-        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
-//        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
-//        Role role = new Role();
-//        roles.add(role.setName(SchemaConstant.DEFAULT_ROLE));
-
-        user.setRoles((Set<Role>) role);
-        user.setActive(true);
         if (file != null && !file.isEmpty()) {
             user.setProfileImageName(file.getOriginalFilename());
-            try {
-                user.setImage(Base64.getEncoder().encodeToString(file.getBytes()));
-            } catch (IOException e) {
-                e.printStackTrace();
-
-            }
+            imageByte(file, user);
         }
 
-        userRegistrationRepository.save(user);
-        return true;
+        getSave(user);
 
     }
 
     public List<UserDto> getAllUsers() {
 
-        List<User> users = userRegistrationRepository.findAll();
+        List<User> users = userRegistrationRepository.findAllActiveUsers();
         return users.stream().map(this::mapUserToDto).collect(Collectors.toList());
     }
 
     public UserDto getUser(long id) {
-        User user = userRegistrationRepository.findById(id).get();
-        UserDto userDto = modelMapper.map(user, UserDto.class);
-        return userDto;
+
+        User user = this.getUserById(id);
+        return modelMapper.map(user, UserDto.class);
     }
 
-    public boolean update(UserDto userDto, MultipartFile file) {
+    public void update(UserDto userDto, MultipartFile file) {
 
-        User user = new User();
-        user.setFirstName(userDto.getFirstName());
-        user.setLastName(userDto.getLastName());
-        user.setContact(userDto.getContact());
-//        Set<Role> roles = userDto.getRoles().stream().map(this::mapDtoToRole).collect(Collectors.toSet());
-//        user.setRoles(roles);
-//        Role role = new Role();
-//        roles.add(role.setName(roles.forEach((item) -> {
-//            item.getName();
-//             return item;
-//        });
-        user.setActive(true);
+        User dbUser = this.getUserById(userDto.getId());
+        Set<Role> roles = new HashSet<>(dbUser.getRoles());
 
+        if(userDto.getRoleName() != null){
+
+            Role role = getRole(userDto.getRoleName());
+            roles.add(role);
+        }
+
+        User user = new User(userDto.getFirstName(), userDto.getLastName(),dbUser.getEmail(),
+                dbUser.getUserName(),dbUser.getPassword(),userDto.getContact(),
+                true, roles);
+
+        user.setId(dbUser.getId());
 
         if (file != null && !file.isEmpty()) {
+
             user.setProfileImageName(file.getOriginalFilename());
-            try {
-                user.setImage(Base64.getEncoder().encodeToString(file.getBytes()));
-                userRegistrationRepository.update(user.getFirstName(), user.getLastName(), user.getContact(),
-                        user.getProfileImageName(), user.getImage(), user.getRoles(), userDto.getId());
+            imageByte(file, user);
 
-            } catch (IOException e) {
-                e.printStackTrace();
-
-            }
         } else {
 
-            userRegistrationRepository.update(user.getFirstName(), user.getLastName(), user.getContact(),
-                    user.getRoles(), userDto.getId());
+            user.setProfileImageName(dbUser.getProfileImageName());
+            user.setImageContent(dbUser.getImageContent());
         }
-        return true;
+        getSave(user);
     }
 
-    public boolean deleteUser(long id) {
+    private void getSave(User user) {
+        try {
+            userRegistrationRepository.save(user);
+        }catch (Exception e){
+            throw new UserNotFoundException("failed to save or update "+e.getMessage());
+        }
+    }
 
-        userRegistrationRepository.deleteById(id);
-        return true;
+    public void deleteUser(long id) {
+
+        try {
+            userRegistrationRepository.update(false,id);
+        }catch (Exception e){
+            throw new UserNotFoundException(id +" not found");
+        }
     }
 
     public List<RoleDto> roleDtoList() {
 
-        List<Role> roles = roleRepository.findAll();
+        List<Role> roles = this.roles();
         return roles.stream().map(this::mapRoleToDto).collect(Collectors.toList());
     }
 
+    private List<Role> roles() {
+        return roleRepository.findAll();
+    }
 
-//    @Override
-//    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-//
-//        User user = userRegistrationRepository.findByUserName(username);
-//        if(user == null) {
-//            throw new UsernameNotFoundException("Invalid username or password.");
-//        }
-//        return new org.springframework.security.core.userdetails.User(user.getUserName(),
-//                user.getPassword(), mapRolesToAuthorities(user.getRoles()));
-//    }
-//
-//    private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<Role> roles){
-//        return roles.stream().map(role ->
-//                new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
-//    }
+    private User getUserById(long id) {
 
-//    private Optional<org.springframework.security.core.userdetails.User> getCurrentUser(){
-//        org.springframework.security.core.userdetails.User principle = (org.springframework.security.core.userdetails.User)
-//                SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-//        return Optional.of(principle);
-//    }
+        User user = userRegistrationRepository.findById(id).get();
 
+        if(user == null){
+            throw new UserNotFoundException("user not found");
+        }
+
+        return user;
+    }
+
+    private void imageByte(MultipartFile file, User user) {
+        try {
+            user.setImageContent(Base64.getEncoder().encodeToString(file.getBytes()));
+        } catch (IOException e) {
+            throw new FileException("problem in image upload"+e.getMessage());
+
+        }
+    }
+
+    private Role getRole(String userRole) {
+
+        return roleRepository.findByName(userRole);
+    }
 
     private UserDto mapUserToDto(User user) {
 
-        UserDto userDto = modelMapper.map(user, UserDto.class);
-        return userDto;
+        return modelMapper.map(user, UserDto.class);
     }
 
     private RoleDto mapRoleToDto(Role role) {
 
-        RoleDto roleDto = modelMapper.map(role, RoleDto.class);
-        return roleDto;
+        return modelMapper.map(role, RoleDto.class);
     }
 
-
-    private Role mapDtoToRole(RoleDto roleDto) {
-
-        Role role = modelMapper.map(roleDto, Role.class);
-        return role;
-    }
-
-//    private String getPassword(String password){
-//
-//        return passwordEncoder.encode(password);
-//    }
 }

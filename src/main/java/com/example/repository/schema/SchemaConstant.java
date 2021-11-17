@@ -9,8 +9,4 @@ public class SchemaConstant {
     public static final String ROLE_SEQUENCE_NAME = "R_ACCOUNTS";
 
     public static final String USER_ROLE_TABLE_NAME = "USERS_ROLES";
-
-    public static final String DEFAULT_ROLE = "ROLE_USER";
-
-
 }

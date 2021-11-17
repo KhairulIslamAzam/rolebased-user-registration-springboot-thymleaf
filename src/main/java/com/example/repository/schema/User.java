@@ -1,14 +1,11 @@
 package com.example.repository.schema;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -16,8 +13,7 @@ import java.util.Set;
 @Entity
 @Accessors(chain = true)
 @Table(name = SchemaConstant.USER_TABLE_NAME)
-@NoArgsConstructor
-public class User {
+public class User implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "ACCOUNT_ID_GEN")
@@ -50,11 +46,11 @@ public class User {
 
     @Lob
     @Column(name = "MEDIUMBLOB")
-    private String image;
+    private String imageContent;
 
     private boolean active;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = SchemaConstant.USER_ROLE_TABLE_NAME,
             joinColumns = @JoinColumn(
@@ -65,11 +61,20 @@ public class User {
     private Set<Role> roles = new HashSet<>();
 
 
-    public User(String firstName, String lastName, String email, String userName, String contact) {
+    public User() {
+    }
+
+    public User(String firstName, String lastName, String email,
+                String userName, String password, String contact,
+                boolean active, Set<Role> roles) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.userName = userName;
+        this.password = password;
         this.contact = contact;
+        this.imageContent = imageContent;
+        this.active = active;
+        this.roles = roles;
     }
 }

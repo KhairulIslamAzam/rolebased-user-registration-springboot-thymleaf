@@ -18,8 +18,7 @@ public class UserDto {
     private String profileImageName;
     private String image;
     private boolean active;
-    private long roleId;
     private Set<RoleDto> roles;
+    private String roleName;
 
-//    private long roleId;
 }

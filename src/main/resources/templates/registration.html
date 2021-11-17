@@ -44,7 +44,7 @@
 
             <h1>Registration</h1>
 
-            <form th:action="@{/users/registration}" method="post" th:object="${userDto}" enctype="multipart/form-data">
+            <form th:action="@{/registration}" method="post" th:object="${userDto}" enctype="multipart/form-data">
                 <div class="form-group">
             <label class="control-label" for="firstName"> First Name </label>
             <input id="firstName" class="form-control" th:field="*{firstName}"
